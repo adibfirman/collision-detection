@@ -23,6 +23,10 @@ canvas.height = h;
 
 const c = canvas.getContext("2d");
 
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
 class Circle {
   constructor(x, y, r, color) {
     this.x = x;
@@ -34,8 +38,7 @@ class Circle {
   draw() {
     c.beginPath();
     c.arc(this.x, this.y, this.r, Math.PI * 2, false);
-    c.fillStyle = this.color;
-    c.fill();
+    c.strokeStyle = this.color;
     c.stroke();
     c.closePath();
   }
@@ -45,7 +48,7 @@ class Circle {
   }
 }
 
-function getDistance(x1, x2, y1, y2) {
+function getDistance(x1, y1, x2, y2) {
   const xDistance = x2 - x1;
   const yDistance = y2 - y1;
   const powX = Math.pow(xDistance, 2);
@@ -54,26 +57,30 @@ function getDistance(x1, x2, y1, y2) {
   return Math.sqrt(powX + powY);
 }
 
-let circle1;
-let circle2;
+let particles = [];
 (function init() {
-  circle1 = new Circle(100, 100, 50, "black");
-  circle2 = new Circle(10, 10, 10, "aqua");
+  for (let i = 0; i < 4; i++) {
+    const r = 50;
+    const x = randomInt(r, w - r);
+    const y = randomInt(r, h - r);
+
+    particles.push(new Circle(x, y, r, "red"));
+
+    if (particles[i - 1]) {
+      const prevData = particles[i - 1];
+      const data = particles[i];
+
+      if (getDistance(data.x, data.y, prevData.x, prevData.y) - r * 2 < 0) {
+        particles[i].x = randomInt(r, w - r);
+        particles[i].y = randomInt(r, h - r);
+      }
+    }
+  }
 })();
 
 (function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
 
-  circle1.update();
-  circle2.update();
-
-  circle2.x = mouse.x;
-  circle2.y = mouse.y;
-
-  const distanceObj = getDistance(circle1.x, circle2.x, circle1.y, circle2.y);
-
-  if (distanceObj < circle1.r + circle2.r) {
-    circle1.color = "aqua";
-  } else circle1.color = "black";
+  particles.forEach(particle => particle.update());
 })();
