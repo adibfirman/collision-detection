@@ -1,5 +1,5 @@
 const canvas = document.querySelector("canvas");
-const w = Math.floor(innerWidth / 1.3);
+const w = Math.floor(innerWidth / 2);
 const h = Math.floor(innerHeight / 2);
 
 const mouse = {
@@ -28,10 +28,12 @@ function randomInt(min, max) {
 }
 
 class Circle {
-  constructor(x, y, r, color) {
+  constructor(x, y, r, dx, dy, color) {
     this.x = x;
     this.y = y;
     this.r = r;
+    this.dx = dx;
+    this.dy = dy;
     this.color = color;
   }
 
@@ -43,7 +45,23 @@ class Circle {
     c.closePath();
   }
 
-  update() {
+  update(particles) {
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
+      const calcDist =
+        getDistance(this.x, this.y, particle.x, particle.y) - this.r * 2;
+
+      if (this === particle) continue;
+      if (calcDist < 0) {
+        console.log("has collided");
+      }
+    }
+
+    if (this.x > w - this.r || this.x < this.r) this.dx = -this.dx;
+    if (this.y > h - this.r || this.y < this.r) this.dy = -this.dy;
+
+    this.x += this.dx;
+    this.y += this.dy;
     this.draw();
   }
 }
@@ -59,22 +77,25 @@ function getDistance(x1, y1, x2, y2) {
 
 let particles = [];
 (function init() {
-  for (let i = 0; i < 4; i++) {
-    const r = 50;
-    const x = randomInt(r, w - r);
-    const y = randomInt(r, h - r);
+  for (let i = 0; i < 2; i++) {
+    const r = 30;
+    let x = randomInt(r, w - r);
+    let y = randomInt(r, h - r);
+    let dx = randomInt(1, 3);
+    let dy = randomInt(-1, 3);
 
-    particles.push(new Circle(x, y, r, "red"));
-
-    if (particles[i - 1]) {
-      const prevData = particles[i - 1];
-      const data = particles[i];
-
-      if (getDistance(data.x, data.y, prevData.x, prevData.y) - r * 2 < 0) {
-        particles[i].x = randomInt(r, w - r);
-        particles[i].y = randomInt(r, h - r);
+    if (i !== 0) {
+      for (let j = 0; j < particles.length; j++) {
+        const particle = particles[j];
+        if (getDistance(x, y, particle.x, particle.y) - r * 2 < 0) {
+          x = randomInt(r, w - r);
+          y = randomInt(r, h - r);
+          j = -1;
+        }
       }
     }
+
+    particles.push(new Circle(x, y, r, dx, dy, "red"));
   }
 })();
 
@@ -82,5 +103,5 @@ let particles = [];
   requestAnimationFrame(animate);
   c.clearRect(0, 0, canvas.width, canvas.height);
 
-  particles.forEach(particle => particle.update());
+  particles.forEach(particle => particle.update(particles));
 })();
